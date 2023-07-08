@@ -20,7 +20,7 @@ setup(
     py_modules=['wptools'],
     packages=find_packages(exclude=['tests']),
     test_suite='tests.test_basic',
-    install_requires=['certifi', 'html2text', 'lxml'],
+    install_requires=['certifi', 'BeautifulSoup4', 'lxml'],
     include_package_data=True,
     entry_points={
         'console_scripts': ['wptool=wptools.wptool:main'],
