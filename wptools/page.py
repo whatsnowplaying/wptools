@@ -60,12 +60,10 @@ class WPToolsPage(WPToolsRESTBase,
 
         title = self.params.get('title')
 
-        boxterm = kwargs.get('boxterm')
-        if boxterm:
+        if boxterm := kwargs.get('boxterm'):
             self.params.update({'boxterm': boxterm})
 
-        endpoint = kwargs.get('endpoint')
-        if endpoint:
+        if endpoint := kwargs.get('endpoint'):
             self.params.update({'endpoint': endpoint})
 
         pageid = kwargs.get('pageid')
@@ -96,9 +94,7 @@ class WPToolsPage(WPToolsRESTBase,
         """
         for img in self.data['image']:
             if 'url' not in img:
-                if title == img['file']:  # matching title/file
-                    img.update(info)
-                elif _from == img['file']:  # matching from/file
+                if title == img['file'] or _from == img['file']:  # matching title/file
                     img.update(info)
 
     def __pull_image_info(self, title, imageinfo, normalized):
@@ -116,8 +112,7 @@ class WPToolsPage(WPToolsRESTBase,
 
             # let's put all "metadata" in one member
             info['metadata'] = {}
-            extmetadata = info.get('extmetadata')
-            if extmetadata:
+            if extmetadata := info.get('extmetadata'):
                 info['metadata'].update(extmetadata)
                 del info['extmetadata']
 
@@ -139,10 +134,7 @@ class WPToolsPage(WPToolsRESTBase,
         """
         if 'image' not in self.data:
             return
-        missing = []
-        for img in self.data['image']:
-            if 'url' not in img:
-                missing.append(img['file'])
+        missing = [img['file'] for img in self.data['image'] if 'url' not in img]
         return list(set(missing))
 
     def _normalize_images(self):
@@ -156,7 +148,7 @@ class WPToolsPage(WPToolsRESTBase,
             fstart = fname.startswith('File:')
             istart = fname.startswith('Image:')
             if not fstart and not istart:
-                fname = 'File:' + fname
+                fname = f'File:{fname}'
                 img['orig'] = img['file']
                 img['file'] = fname
 
@@ -188,7 +180,7 @@ class WPToolsPage(WPToolsRESTBase,
             qstr = qobj.restbase(self.params.get('rest_endpoint'), title)
 
         if qstr is None:
-            raise ValueError("Unknown action: %s" % action)
+            raise ValueError(f"Unknown action: {action}")
 
         return qstr
 
@@ -228,8 +220,7 @@ class WPToolsPage(WPToolsRESTBase,
 
         for page in pages:
             title = page.get('title')
-            imageinfo = page.get('imageinfo')
-            if imageinfo:
+            if imageinfo := page.get('imageinfo'):
                 self.__pull_image_info(title, imageinfo, normalized)
 
         # Mark missing imageinfo to prevent duplicate requests
@@ -250,21 +241,18 @@ class WPToolsPage(WPToolsRESTBase,
         parsetree = pdata.get('parsetree')
         self.data['parsetree'] = parsetree
 
-        boxterm = self.params.get('boxterm')
-        if boxterm:
+        if boxterm := self.params.get('boxterm'):
             infobox = utils.get_infobox(parsetree, boxterm)
         else:
             infobox = utils.get_infobox(parsetree)
         self.data['infobox'] = infobox
 
-        title = pdata.get('title')
-        if title:
+        if title := pdata.get('title'):
             self.data['title'] = title
             if not self.params.get('title'):
                 self.params['title'] = title
 
-        wikibase = pdata.get('properties').get('wikibase_item')
-        if wikibase:
+        if wikibase := pdata.get('properties').get('wikibase_item'):
             self.data['wikibase'] = wikibase
             self.data['wikidata_url'] = utils.wikidata_url(wikibase)
 
@@ -314,35 +302,28 @@ class WPToolsPage(WPToolsRESTBase,
         """
         self.data['pageid'] = page.get('pageid')
 
-        assessments = page.get('pageassessments')
-        if assessments:
+        if assessments := page.get('pageassessments'):
             self.data['assessments'] = assessments
 
-        extract = page.get('extract')
-        if extract:
+        if extract := page.get('extract'):
             self.data['extract'] = extract
             soup = BeautifulSoup(extract, 'html.parser')
-            extext = soup.get_text()
-            if extext:
+            if extext := soup.get_text():
                 self.data['extext'] = extext.strip()
 
-        fullurl = page.get('fullurl')
-        if fullurl:
+        if fullurl := page.get('fullurl'):
             self.data['url'] = fullurl
-            self.data['url_raw'] = fullurl + '?action=raw'
+            self.data['url_raw'] = f'{fullurl}?action=raw'
 
-        length = page.get('length')
-        if length:
+        if length := page.get('length'):
             self.data['length'] = length
 
         self._extend_data('links', utils.get_links(page.get('links')))
 
         self._update_data('modified', 'page', page.get('touched'))
 
-        pageprops = page.get('pageprops')
-        if pageprops:
-            wikibase = pageprops.get('wikibase_item')
-            if wikibase:
+        if pageprops := page.get('pageprops'):
+            if wikibase := pageprops.get('wikibase_item'):
                 self.data['wikibase'] = wikibase
                 self.data['wikidata_url'] = utils.wikidata_url(wikibase)
 
@@ -355,12 +336,10 @@ class WPToolsPage(WPToolsRESTBase,
         """
         self.data['pageid'] = page.get('pageid')
 
-        redirects = page.get('redirects')
-        if redirects:
+        if redirects := page.get('redirects'):
             self.data['redirects'] = redirects
 
-        terms = page.get('terms')
-        if terms:
+        if terms := page.get('terms'):
             if terms.get('alias'):
                 self.data['aliases'] = terms['alias']
 
@@ -375,8 +354,7 @@ class WPToolsPage(WPToolsRESTBase,
         if not self.params.get('title'):
             self.params['title'] = title
 
-        watchers = page.get('watchers')
-        if watchers:
+        if watchers := page.get('watchers'):
             self.data['watchers'] = watchers
 
         self._set_query_image(page)
@@ -385,8 +363,7 @@ class WPToolsPage(WPToolsRESTBase,
         """
         set more expensive action=query response data
         """
-        categories = page.get('categories')
-        if categories:
+        if categories := page.get('categories'):
             self.data['categories'] = [x['title'] for x in categories]
 
         if page.get('contributors'):
@@ -396,18 +373,14 @@ class WPToolsPage(WPToolsRESTBase,
                 contributors = len(contributors)
             self.data['contributors'] = contributors + anoncontributors
 
-        files = page.get('images')  # really, these are FILES
-        if files:
+        if files := page.get('images'):
             self.data['files'] = [x['title'] for x in files]
 
-        languages = page.get('langlinks')
-        if languages:
+        if languages := page.get('langlinks'):
             self.data['languages'] = languages
 
-        pageviews = page.get('pageviews')
-        if pageviews:
-            values = [x for x in pageviews.values() if x]
-            if values:
+        if pageviews := page.get('pageviews'):
+            if values := [x for x in pageviews.values() if x]:
                 self.data['views'] = int(sum(values) / len(values))
             else:
                 self.data['views'] = 0
@@ -430,7 +403,7 @@ class WPToolsPage(WPToolsRESTBase,
 
         if thumbnail:
             qthumb = {'kind': 'query-thumbnail'}
-            qthumb.update(thumbnail)
+            qthumb |= thumbnail
             qthumb['url'] = thumbnail.get('source')
             del qthumb['source']
             qthumb['file'] = qthumb['url'].split('/')[-2]
@@ -500,9 +473,9 @@ class WPToolsPage(WPToolsRESTBase,
         """
         wikibase = self.params.get('wikibase')
 
-        if wikibase:
+        self.flags['defer_imageinfo'] = True
 
-            self.flags['defer_imageinfo'] = True
+        if wikibase:
 
             self.get_wikidata(False, proxy, timeout)
             self.get_query(False, proxy, timeout)
@@ -510,14 +483,7 @@ class WPToolsPage(WPToolsRESTBase,
 
             self.flags['defer_imageinfo'] = False
 
-            self.get_restbase('/page/summary/', False, proxy, timeout)
-
-            if show and not self.flags.get('silent'):
-                self.show()
-
         else:
-
-            self.flags['defer_imageinfo'] = True
 
             self.get_query(False, proxy, timeout)
             self.get_parse(False, proxy, timeout)
@@ -533,10 +499,10 @@ class WPToolsPage(WPToolsRESTBase,
             if wiki and 'wikipedia.org' not in wiki:
                 self.skip_action('restbase')
 
-            self.get_restbase('/page/summary/', False, proxy, timeout)
+        self.get_restbase('/page/summary/', False, proxy, timeout)
 
-            if show and not self.flags.get('silent'):
-                self.show()
+        if show and not self.flags.get('silent'):
+            self.show()
 
         return self
 
@@ -728,12 +694,9 @@ class WPToolsPage(WPToolsRESTBase,
         for img in self.data['image']:
             if token and token not in img['kind']:
                 continue
-            info = {}
-            for key in img:
-                if fields and key not in fields:
-                    continue
-                info.update({key: img[key]})
-            if info:
+            if info := {
+                key: img[key] for key in img if not fields or key in fields
+            }:
                 out.append(info)
 
         return out
