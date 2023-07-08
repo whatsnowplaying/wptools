@@ -47,7 +47,7 @@ class WPToolsCategory(core.WPTools):
         namespace = kwargs.get('namespace')
 
         title = None
-        if len(args) > 0:
+        if args:
             title = args[0]
             self.params.update({'title': title})
 
@@ -110,8 +110,7 @@ class WPToolsCategory(core.WPTools):
         self._handle_continuations(data, 'category')
 
         if action == 'category':
-            members = data.get('query').get('categorymembers')
-            if members:
+            if members := data.get('query').get('categorymembers'):
                 self._add_members(members)
 
         if action == 'random':

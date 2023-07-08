@@ -278,10 +278,7 @@ def title(lang=None):
     if not lang:
         lang = language()
 
-    titles = set()
-    if lang == 'en':
-        titles = WPToolsTestTitles.animals['en']
-
+    titles = WPToolsTestTitles.animals['en'] if lang == 'en' else set()
     titles = titles.union(WPToolsTestTitles.featured[lang])
     titles = titles.union(WPToolsTestTitles.people[lang])
     titles = titles.union(WPToolsTestTitles.places[lang])

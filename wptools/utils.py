@@ -36,12 +36,10 @@ def get_infobox(ptree, boxterm="box"):
         title = item.find('title').text
         if title and boxterm in title:
 
-            box = template_to_dict(item)
-            if box:
+            if box := template_to_dict(item):
                 return box
 
-            alt = template_to_dict_alt(item, title)
-            if alt:
+            if alt := template_to_dict_alt(item, title):
                 boxes.append(alt)
 
     if boxes:
@@ -73,8 +71,7 @@ def is_text(obj, name=None):
     except NameError:  # python3
         ans = isinstance(obj, str)
     if name:
-        print("is_text: (%s) %s = %s" % (ans, name, obj.__class__),
-              file=sys.stderr)
+        print(f"is_text: ({ans}) {name} = {obj.__class__}", file=sys.stderr)
     return ans
 
 
@@ -82,9 +79,7 @@ def isfilename(name):
     """
     returns True if name looks like a Mediawiki filename
     """
-    if name[0].isalnum() and name[-3:].isalpha():
-        return True
-    return False
+    return bool(name[0].isalnum() and name[-3:].isalpha())
 
 
 
@@ -174,7 +169,7 @@ def template_to_dict_alt(tree, title):
                 box.append(part)
             part = []
 
-        if item.tag == 'name' or item.tag == 'value':
+        if item.tag in ['name', 'value']:
             for attr in item.keys():
                 part.append({attr: item.get(attr)})
 
@@ -223,7 +218,7 @@ def template_to_dict_find(item, debug=0):
         value = text_with_children(item.find('value'), debug)
 
     if debug:
-        print("  find: %s" % value)
+        print(f"  find: {value}")
 
     return value
 
@@ -263,7 +258,7 @@ def template_to_dict_iter(item, debug=0):
     value = " ".join([x for x in valarr if x])
 
     if debug:
-        print("  iter: %s" % value)
+        print(f"  iter: {value}")
 
     return value
 
@@ -273,31 +268,27 @@ def template_to_dict_iter_debug(elm):
     Print expanded element on stdout for debugging
     """
     if elm.text is not None:
-        print("    <%s>%s</%s>" % (elm.tag, elm.text, elm.tag), end='')
-        if elm.tail is not None:
-            print(elm.tail)
-        else:
+        print(f"    <{elm.tag}>{elm.text}</{elm.tag}>", end='')
+        if elm.tail is None:
             print()
-    else:
-        if elm.tail is not None:
-            print("    <%s>%s" % (elm.tag, elm.tail))
         else:
-            print("    <%s>" % elm.tag)
+            print(elm.tail)
+    elif elm.tail is not None:
+        print(f"    <{elm.tag}>{elm.tail}")
+    else:
+        print(f"    <{elm.tag}>")
 
 
 def template_to_text(tmpl, debug=0):
     """
     convert parse tree template to text
     """
-    tarr = []
-    for item in tmpl.itertext():
-        tarr.append(item)
-
+    tarr = list(tmpl.itertext())
     text = "{{%s}}" % "|".join(tarr).strip()
 
     if debug > 1:
         print("+ template_to_text:")
-        print("  %s" % text)
+        print(f"  {text}")
 
     return text
 
@@ -329,7 +320,7 @@ def text_with_children(node, debug=0):
 
     if debug > 1:
         print("+ text_with_children:")
-        print("  %s" % value)
+        print(f"  {value}")
 
     return value
 
@@ -339,4 +330,4 @@ def wikidata_url(wikibase):
     returns Wikidata URL from wikibase
     """
     if wikibase:
-        return 'https://www.wikidata.org/wiki/' + wikibase
+        return f'https://www.wikidata.org/wiki/{wikibase}'

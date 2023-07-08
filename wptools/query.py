@@ -121,7 +121,7 @@ class WPToolsQuery(object):
         self.lang = lang
         self.variant = variant
 
-        self.wiki = wiki or "%s.wikipedia.org" % self.lang
+        self.wiki = wiki or f"{self.lang}.wikipedia.org"
         self.domain = domain_name(self.wiki)
         self.endpoint = endpoint or self.DEFAULT_ENDPOINT
         self.uri = self.wiki_uri(self.wiki)
@@ -145,14 +145,14 @@ class WPToolsQuery(object):
             title = None
 
         if title:
-            query += "&cmtitle=" + safequote(title)
+            query += f"&cmtitle={safequote(title)}"
 
         if pageid:
             query += "&cmpageid=%d" % pageid
 
         if cparams:
             query += cparams
-            status += ' (%s)' % cparams
+            status += f' ({cparams})'
 
         self.set_status('categorymembers', status)
 
@@ -175,7 +175,7 @@ class WPToolsQuery(object):
             PROPS='labels')
 
         qids = '|'.join(qids)
-        query += "&ids=%s" % qids
+        query += f"&ids={qids}"
 
         self.set_status('labels', qids)
 
@@ -207,7 +207,7 @@ class WPToolsQuery(object):
             qry = qry.replace('&page=', '&pageid=').replace('&redirects', '')
 
         if self.variant:
-            qry += '&variant=' + self.variant
+            qry += f'&variant={self.variant}'
 
         self.set_status('parse', pageid or title)
 
@@ -228,10 +228,10 @@ class WPToolsQuery(object):
 
         if cparams:
             query += cparams
-            status += " (%s)" % cparams
+            status += f" ({cparams})"
 
         if self.variant:
-            query += '&variant=' + self.variant
+            query += f'&variant={self.variant}'
 
         self.set_status('query', status)
 
@@ -247,17 +247,17 @@ class WPToolsQuery(object):
             ENDPOINT=self.endpoint,
             TITLES=safequote(titles) or pageids)
 
-        status = "%s" % (pageids or titles)
+        status = f"{pageids or titles}"
 
         if pageids and not titles:
             query = query.replace('&titles=', '&pageids=')
 
         if cparams:
             query += cparams
-            status += " (%s)" % cparams
+            status += f" ({cparams})"
 
         if self.variant:
-            query += '&variant=' + self.variant
+            query += f'&variant={self.variant}'
 
         self.set_status('querymore', status)
 
@@ -284,10 +284,7 @@ class WPToolsQuery(object):
             u'\U0001f370',  # strawberry shortcake
         ]
 
-        action = 'random'
-        if namespace:
-            action = 'random:%d' % namespace
-
+        action = 'random:%d' % namespace if namespace else 'random'
         self.set_status(action, random.choice(emoji))
 
         return query
@@ -297,7 +294,7 @@ class WPToolsQuery(object):
         Returns RESTBase query string
         """
         if not endpoint:
-            raise ValueError("invalid endpoint: %s" % endpoint)
+            raise ValueError(f"invalid endpoint: {endpoint}")
 
         route = endpoint
         if title and endpoint != '/page/':
@@ -305,7 +302,7 @@ class WPToolsQuery(object):
 
         self.set_status('restbase', route)
 
-        return "%s/api/rest_v1/%s" % (self.uri, route[1:])
+        return f"{self.uri}/api/rest_v1/{route[1:]}"
 
     def set_status(self, action, target):
         """
@@ -316,7 +313,7 @@ class WPToolsQuery(object):
         except (AttributeError, TypeError):
             pass
 
-        status = "%s (%s) %s" % (self.domain, action, target)
+        status = f"{self.domain} ({action}) {target}"
         status = status.strip().replace('\n', '')
 
         if len(status) >= self.MAXWIDTH:
@@ -330,25 +327,19 @@ class WPToolsQuery(object):
         """
         Returns site query
         """
-        query = None
         viewdays = 7
         hostpath = self.uri + self.endpoint
 
+        query = None
         if action == 'siteinfo':
-            query = hostpath + (
-                '?action=query'
-                '&meta=siteinfo|siteviews'
-                '&siprop=general|statistics'
-                '&list=mostviewed&pvimlimit=max')
+            query = f'{hostpath}?action=query&meta=siteinfo|siteviews&siprop=general|statistics&list=mostviewed&pvimlimit=max'
             query += '&pvisdays=%d' % viewdays  # meta=siteviews
             self.set_status('query', 'siteinfo|siteviews|mostviewed')
         elif action == 'sitematrix':
-            query = hostpath + '?action=sitematrix'
+            query = f'{hostpath}?action=sitematrix'
             self.set_status('sitematrix', 'all')
         elif action == 'sitevisitors':
-            query = hostpath + (
-                '?action=query'
-                '&meta=siteviews&pvismetric=uniques')
+            query = f'{hostpath}?action=query&meta=siteviews&pvismetric=uniques'
             query += '&pvisdays=%d' % viewdays  # meta=siteviews
             self.set_status('query', 'siteviews:uniques')
 
@@ -363,9 +354,7 @@ class WPToolsQuery(object):
         """
         Returns scheme://domain from wiki name
         """
-        if wiki.startswith('http'):
-            return wiki
-        return "https://" + self.domain
+        return wiki if wiki.startswith('http') else f"https://{self.domain}"
 
     def wikidata(self, title, wikibase=None):
         """
@@ -381,11 +370,11 @@ class WPToolsQuery(object):
             PROPS="aliases|info|claims|descriptions|labels|sitelinks")
 
         if wikibase:
-            query += "&ids=%s" % wikibase
+            query += f"&ids={wikibase}"
         elif title:
             title = safequote(title)
-            query += "&sites=%swiki" % self.lang
-            query += "&titles=%s" % title
+            query += f"&sites={self.lang}wiki"
+            query += f"&titles={title}"
 
         self.set_status('wikidata', wikibase or title)
 

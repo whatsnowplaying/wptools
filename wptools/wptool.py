@@ -36,21 +36,19 @@ def _html_title(page):
     """
     link = "<a href=\"%s\">%s</a>" % (page.data.get('url'),
                                       page.data.get('title'))
-    desc = page.data.get('description')
-    if desc:
-        link += "&mdash;<i>%s</i>" % desc
+    if desc := page.data.get('description'):
+        link += f"&mdash;<i>{desc}</i>"
     else:
         link += "&mdash;<i>description</i>"
     if link:
-        return "<p>%s</p>" % link
+        return f"<p>{link}</p>"
 
 
 def _image(page):
     """
     returns (preferred) image from wptools object
     """
-    pageimage = page.images(token='pageimage')
-    if pageimage:
+    if pageimage := page.images(token='pageimage'):
         return pageimage[0]['url']
 
 
@@ -58,8 +56,7 @@ def _page_html(page):
     """
     returns assembled HTML output
     """
-    out = []
-    out.append(_html_title(page))
+    out = [_html_title(page)]
     out.append(_html_image(page))
     out.append(page.data.get('extract'))
     return "\n".join([x for x in out if x])
@@ -74,7 +71,7 @@ def _page_text(page, nowrap=False):
 
     desc = page.data.get('description')
     if desc:
-        desc = "_%s_" % desc
+        desc = f"_{desc}_"
 
     img = _text_image(page)
 
@@ -85,25 +82,15 @@ def _page_text(page, nowrap=False):
         pars = re.sub(r'[ ]+\*[ ]+', '* ', pars)
 
     if pars and not nowrap:
-        parlist = []
-        for par in pars.split("\n\n"):
-            parlist.append("\n".join(textwrap.wrap(par)))
-
-        disambiguation = page.data.get('disambiguation')
-        if disambiguation:
+        parlist = ["\n".join(textwrap.wrap(par)) for par in pars.split("\n\n")]
+        if disambiguation := page.data.get('disambiguation'):
             parlist.append(' * ' + "\n * ".join(page.data.get('links')))
 
         pars = "\n\n".join(parlist)
 
-    url = '<%s>' % page.data['url']
+    url = f"<{page.data['url']}>"
 
-    txt = []
-    txt.append(title)
-    txt.append(desc)
-    txt.append(url)
-    txt.append(pars)
-    txt.append(img)
-
+    txt = [title, desc, url, pars, img]
     return "\n\n".join([x for x in txt if x])
 
 
@@ -128,12 +115,8 @@ def _text_image(page):
     """
     returns text image URL
     """
-    img = None
     alt = page.data.get('label') or page.data.get('title')
-    source = _image(page)
-    if source:
-        img = "![%s](%s)" % (alt, source)
-    return img
+    return f"![{alt}]({source})" if (source := _image(page)) else None
 
 
 def get(args):
@@ -152,10 +135,7 @@ def get(args):
 
     if query:
         qobj = WPToolsQuery(lang=lang, wiki=wiki)
-        if title:
-            return qobj.query(title)
-        return qobj.random()
-
+        return qobj.query(title) if title else qobj.random()
     page = wptools.page(title, lang=lang, silent=silent,
                         verbose=verbose, wiki=wiki)
 
@@ -186,8 +166,7 @@ def parse_args():
         "Gets a random English Wikipedia article by default, or in the\n"
         "language -lang, or from the wikisite -wiki, or by specific\n"
         "title -title. The output is a plain text extract unless -HTML.")
-    epilog = ("Powered by https://github.com/siznax/wptools/ %s"
-              % wptools.__version__)
+    epilog = f"Powered by https://github.com/siznax/wptools/ {wptools.__version__}"
     argp = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,

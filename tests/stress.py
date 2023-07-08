@@ -54,7 +54,7 @@ def popular(lang):
     """
     site = wptools.site(silent=True)
     if lang:
-        site.get_info("%s.wikipedia.org" % lang)
+        site.get_info(f"{lang}.wikipedia.org")
     else:
         site.get_info()
     return [x['title'] for x in site.data['mostviewed']]
@@ -72,19 +72,18 @@ def print_header(delay, lang, pages):
     if pagestr == 1:
         pagestr = "+"
 
-    msg = []
-    msg.append("WPTOOLS STRESS TEST")
-    msg.append(time.asctime(time.gmtime()))
+    msg = ["WPTOOLS STRESS TEST", time.asctime(time.gmtime())]
     msg.append("delay: %d lang: %s pages: %s" % (delay, langstr, pagestr))
     msgstr = " ".join(msg)
 
-    header = [msgstr]
-    header.append("=" * len(msgstr))
-    header.append("Python " + sys.version)
-    header.append('-' * len(msgstr))
-
+    header = [
+        msgstr,
+        "=" * len(msgstr),
+        f"Python {sys.version}",
+        '-' * len(msgstr),
+    ]
     if len(pages) > 1:
-        print("Getting top %s.wikipedia.org pages" % lang)
+        print(f"Getting top {lang}.wikipedia.org pages")
         for i, title in enumerate(pages[:10]):
             print(" %d. %s" % (i + 1, title))
 
@@ -101,10 +100,7 @@ def main(args):
 
     start = int(time.time())
 
-    pages = ['forever']
-    if top:
-        pages = popular(lang)
-
+    pages = popular(lang) if top else ['forever']
     print_header(delay, lang, pages)
 
     try:
@@ -140,7 +136,7 @@ def main(args):
             frps = '{:.1f}'.format(rps)
 
             print("[%d] %d %s %s" % (count, nrq, frps, url))
-            print("%s %s" % (page.data.get('wikibase'), preview))
+            print(f"{page.data.get('wikibase')} {preview}")
 
             time.sleep(delay)
 

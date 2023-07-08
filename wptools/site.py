@@ -37,8 +37,7 @@ class WPToolsSite(core.WPTools):
         """
         super(WPToolsSite, self).__init__(*args, **kwargs)
 
-        endpoint = kwargs.get('endpoint')
-        if endpoint:
+        if endpoint := kwargs.get('endpoint'):
             self.params.update({'endpoint': endpoint})
 
     def _query(self, action, qobj):
@@ -78,15 +77,12 @@ class WPToolsSite(core.WPTools):
 
         info = {}
         for item in general:
-            ginfo = general.get(item)
-            if ginfo:
+            if ginfo := general.get(item):
                 info[item] = ginfo
         self.data['info'] = info
 
-        siteviews = data.get('siteviews')
-        if siteviews:
-            values = [x for x in siteviews.values() if x]
-            if values:
+        if siteviews := data.get('siteviews'):
+            if values := [x for x in siteviews.values() if x]:
                 self.data['siteviews'] = int(sum(values) / len(values))
             else:
                 self.data['siteviews'] = 0
@@ -103,8 +99,7 @@ class WPToolsSite(core.WPTools):
 
         self.params.update({'title': self.COMMONS})
 
-        matrix = data.get('sitematrix')
-        if matrix:
+        if matrix := data.get('sitematrix'):
             self.data['sites'] = self._sitelist(matrix)
             self.data['random'] = random.choice(self.data['sites'])
 
@@ -114,10 +109,8 @@ class WPToolsSite(core.WPTools):
         """
         data = self._load_response('sitevisitors').get('query')
 
-        siteviews = data.get('siteviews')
-        if siteviews:
-            values = [x for x in siteviews.values() if x]
-            if values:
+        if siteviews := data.get('siteviews'):
+            if values := [x for x in siteviews.values() if x]:
                 self.data['visitors'] = int(sum(values) / len(values))
             else:
                 self.data['visitors'] = 0
@@ -139,8 +132,7 @@ class WPToolsSite(core.WPTools):
             for site in sites:
                 if len(site.keys()) > 4:  # closed, fishbowl, private
                     continue
-                domain = self.params.get('domain')
-                if domain:
+                if domain := self.params.get('domain'):
                     if domain in site['url']:
                         _list.append(site['url'])
                 else:
@@ -223,7 +215,7 @@ class WPToolsSite(core.WPTools):
         if 'siteinfo' not in self.cache:
             self.get_info(show=False)
 
-        print("%s mostviewed articles:" % (self.data['site']))
+        print(f"{self.data['site']} mostviewed articles:")
 
         count = 0
         for item in self.data['mostviewed']:
