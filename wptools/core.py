@@ -49,7 +49,7 @@ class WPTools(object):
             'lang': kwargs.get('lang') or 'en',
         }
 
-        if len(args) > 0 and args[0]:  # first positional arg is title
+        if args and args[0]:  # first positional arg is title
             self.params.update({'title': args[0]})
 
         if kwargs.get('skip'):
@@ -68,9 +68,7 @@ class WPTools(object):
         """
         Returns show() display string for data attribute
         """
-        output = ["%s (%s) data" % (seed, self.params['lang'])]
-
-        output.append('{')
+        output = [f"{seed} ({self.params['lang']}) data", '{']
 
         maxwidth = WPToolsQuery.MAXWIDTH
 
@@ -86,7 +84,7 @@ class WPTools(object):
                 prefix = "%s: <dict(%d)>" % (prefix, len(value))
                 value = ', '.join(value.keys())
             elif isinstance(value, int):
-                prefix = "%s:" % prefix
+                prefix = f"{prefix}:"
                 if 'pageid' not in prefix:
                     value = "{:,}".format(value)
             elif isinstance(value, list):
@@ -100,9 +98,9 @@ class WPTools(object):
                 if len(value) > (maxwidth - len(prefix)):
                     prefix = "%s: <str(%d)>" % (prefix, len(value))
                 else:
-                    prefix = "%s:" % prefix
+                    prefix = f"{prefix}:"
 
-            output.append("  %s %s" % (prefix, value))
+            output.append(f"  {prefix} {value}")
 
         output.append('}')
 
@@ -115,10 +113,10 @@ class WPTools(object):
         if not self.data.get('continue'):
             return
 
-        params = []
-        for item in self.data['continue']:
-            params.append("&%s=%s" % (item, urllib.parse.quote_plus(self.data['continue'][item])))
-
+        params = [
+            f"&{item}={urllib.parse.quote_plus(self.data['continue'][item])}"
+            for item in self.data['continue']
+        ]
         return ''.join(params)
 
     def _handle_continuations(self, response, cache_key):
@@ -137,9 +135,8 @@ class WPTools(object):
         if cparams:
             self.data['continue'] = cparams
             del self.cache[cache_key]
-        else:  # no more continuations
-            if 'continue' in self.data:
-                del self.data['continue']
+        elif 'continue' in self.data:
+            del self.data['continue']
 
     def _get(self, action, show, proxy, timeout):
         """
@@ -148,15 +145,15 @@ class WPTools(object):
         silent = self.flags['silent']
 
         if action in self.cache:
-            if action != 'imageinfo' and action != 'labels':
-                utils.stderr("+ %s results in cache" % action, silent)
+            if action not in ['imageinfo', 'labels']:
+                utils.stderr(f"+ {action} results in cache", silent)
                 return
         else:
             self.cache[action] = {}
 
         if self.flags.get('skip') and action in self.flags['skip']:
             if not self.flags['silent']:
-                utils.stderr("+ skipping %s" % action)
+                utils.stderr(f"+ skipping {action}")
             return
 
         if 'requests' not in self.data:
@@ -194,7 +191,7 @@ class WPTools(object):
         response = self.cache[action]['response']
 
         if not response:
-            raise ValueError("Empty response: %s" % self.params)
+            raise ValueError(f"Empty response: {self.params}")
 
         data = response
 
@@ -205,7 +202,7 @@ class WPTools(object):
                 self.data['WARNINGS'] = data['warnings']
 
         if data.get('error'):
-            utils.stderr("API error: %s" % data.get('error'))
+            utils.stderr(f"API error: {data.get('error')}")
             raise LookupError(_query)
 
         if 'query' in action and data.get('query'):
@@ -287,15 +284,12 @@ def handle_wikidata_errors(data, query):
     """
     entities = data.get('entities')
 
-    if not entities:
+    if not entities or '-1' in entities:
         raise LookupError(query)
-    elif '-1' in entities:
-        raise LookupError(query)
-    else:
-        item = list(entities.values())[0]
-        if 'missing' in item:
-            errmsg = "wikidata item %s has been deleted" % item['id']
-            raise LookupError(errmsg)
+    item = list(entities.values())[0]
+    if 'missing' in item:
+        errmsg = f"wikidata item {item['id']} has been deleted"
+        raise LookupError(errmsg)
 
 
 def prettyprint(datastr):
@@ -308,7 +302,7 @@ def prettyprint(datastr):
     extent = maxwidth - (rpad + 2)
     for line in datastr:
         if len(line) >= maxwidth:
-            line = line[:extent] + '...'
+            line = f'{line[:extent]}...'
         utils.stderr(line)
 
 

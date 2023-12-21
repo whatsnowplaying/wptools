@@ -44,7 +44,7 @@ class WPToolsRESTBase(core.WPTools):
         """
         if not self.cache['restbase'].get('info'):
             return
-            
+
         content = self.cache['restbase']['info']['content-type']
         if content.startswith('text/html'):
             html = self.cache['restbase']['response']
@@ -60,7 +60,7 @@ class WPToolsRESTBase(core.WPTools):
             raise LookupError(self.cache['restbase']['query'])
 
         if self.params.get('endpoint') == '/page/':
-            msg = "RESTBase /page/ entry points: %s" % response.get('items')
+            msg = f"RESTBase /page/ entry points: {response.get('items')}"
             utils.stderr(msg)
             del self.cache['restbase']
             return
@@ -90,8 +90,7 @@ class WPToolsRESTBase(core.WPTools):
         self.data['exrest'] = res.get('extract')
         self.data['exhtml'] = res.get('extract_html')
 
-        lastmodified = res.get('lastmodified')
-        if lastmodified:
+        if lastmodified := res.get('lastmodified'):
             pagemod = {'page': lastmodified}
             if 'modified' in self.data:
                 self.data['modified'].update(pagemod)
@@ -102,21 +101,17 @@ class WPToolsRESTBase(core.WPTools):
             lead = res.get('sections')[0]
             self.data['lead'] = lead.get('text')
 
-        title = res.get('title') or res.get('normalizedtitle')
-        if title:
+        if title := res.get('title') or res.get('normalizedtitle'):
             self.data['title'] = title.replace(' ', '_')
 
-        wikibase = res.get('wikibase_item')
-        if wikibase:
+        if wikibase := res.get('wikibase_item'):
             self.data['wikibase'] = wikibase
             self.data['wikidata_url'] = utils.wikidata_url(wikibase)
 
         url = urlparse(self.cache['restbase']['query'])
-        durl = "%s://%s/wiki/%s" % (url.scheme,
-                                    url.netloc,
-                                    self.params['title'])
+        durl = f"{url.scheme}://{url.netloc}/wiki/{self.params['title']}"
         self.data['url'] = durl
-        self.data['url_raw'] = durl + '?action=raw'
+        self.data['url_raw'] = f'{durl}?action=raw'
 
         self._unpack_images(res)
 
@@ -196,7 +191,7 @@ class WPToolsRESTBase(core.WPTools):
         - wikidata_url: <str> Wikidata URL
         """
         if endpoint != '/page/' and not self.params.get('title'):
-            raise StandardError("endpoint %s needs a title" % endpoint)
+            raise StandardError(f"endpoint {endpoint} needs a title")
 
         self.params.update({'rest_endpoint': endpoint})
 

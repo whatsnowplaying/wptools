@@ -40,8 +40,7 @@ class WPToolsWikidata(core.WPTools):
         """
         super(WPToolsWikidata, self).__init__(*args, **kwargs)
 
-        wikibase = kwargs.get('wikibase')
-        if wikibase:
+        if wikibase := kwargs.get('wikibase'):
             self.params.update({'wikibase': wikibase})
 
         self.user_labels = None
@@ -142,7 +141,7 @@ class WPToolsWikidata(core.WPTools):
 
         if item.get('sitelinks'):
             for link in item['sitelinks']:
-                if link == "%swiki" % lang:
+                if link == f"{lang}wiki":
                     title = item['sitelinks'][link]['title']
                     self.data['title'] = title.replace(' ', '_')
 
@@ -168,8 +167,7 @@ class WPToolsWikidata(core.WPTools):
 
         self.data['wikidata_pageid'] = item.get('pageid')
 
-        aliases = item.get('aliases')
-        if aliases:
+        if aliases := item.get('aliases'):
             aliases = [x['value'] for x in aliases[self.params['lang']]]
             self.data['aliases'] = aliases
 
@@ -179,8 +177,7 @@ class WPToolsWikidata(core.WPTools):
         except KeyError:
             self.data['modified'] = {'wikidata': modified}
 
-        wikibase = item.get('id')
-        if wikibase:
+        if wikibase := item.get('id'):
             self.data['wikibase'] = wikibase
             self.data['wikidata_url'] = utils.wikidata_url(wikibase)
 
@@ -194,9 +191,7 @@ class WPToolsWikidata(core.WPTools):
         """
         add images from Wikidata
         """
-        wd_images = self.data['claims'].get('P18')  # image
-
-        if wd_images:
+        if wd_images := self.data['claims'].get('P18'):
             if not isinstance(wd_images, list):
                 wd_images = [wd_images]
 
@@ -212,8 +207,10 @@ class WPToolsWikidata(core.WPTools):
         set what this thing is! "instance of (P31)"
         """
         if 'P31' not in self.data['claims']:  # missing Wikidata
-            msg = ("Note: Wikidata item %s" % self.data['wikibase'],
-                   "missing 'instance of' (P31)")
+            msg = (
+                f"Note: Wikidata item {self.data['wikibase']}",
+                "missing 'instance of' (P31)",
+            )
             utils.stderr(" ".join(msg))
             return
 
@@ -233,7 +230,7 @@ class WPToolsWikidata(core.WPTools):
 
             plabel = self.data['labels'].get(ent)  # P (property) label
             if plabel:
-                plabel = "%s (%s)" % (plabel, ent)
+                plabel = f"{plabel} ({ent})"
 
             claim = []
             for item in claims[ent]:
@@ -241,7 +238,7 @@ class WPToolsWikidata(core.WPTools):
                 if utils.is_text(item) and re.match(r'^Q\d+$', item):
                     ilabel = self.data['labels'].get(item)  # Q (item) label
                     if ilabel:
-                        ilabel = "%s (%s)" % (ilabel, item)
+                        ilabel = f"{ilabel} ({item})"
 
                 if len(claims[ent]) == 1:
                     claim = ilabel
@@ -270,10 +267,7 @@ class WPToolsWikidata(core.WPTools):
             utils.stderr("No entities found.")
             return
 
-        skip_flag = False
-        if 'skip' in self.flags and 'labels' in self.flags['skip']:
-            skip_flag = True
-
+        skip_flag = 'skip' in self.flags and 'labels' in self.flags['skip']
         while 'entities' in self.data and self.data['entities']:
             if skip_flag:
                 break
@@ -384,7 +378,7 @@ def reduce_claims(query_claims):
                 val = value
 
             if not val or not [x for x in val if x]:
-                raise ValueError("%s %s" % (claim, ent))
+                raise ValueError(f"{claim} {ent}")
 
             claims[claim].append(val)
 
